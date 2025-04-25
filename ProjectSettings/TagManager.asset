@@ -5,6 +5,12 @@ TagManager:
   serializedVersion: 2
   tags:
   - Tanah
+  - Health
+  - Bahaya
+  - biru
+  - hijau
+  - kuning
+  - merah
   layers:
   - Default
   - TransparentFX

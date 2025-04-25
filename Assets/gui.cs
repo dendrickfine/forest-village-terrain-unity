@@ -9,4 +9,10 @@ public class gui : MonoBehaviour
     {
         SceneManager.LoadScene("terrain");
     }
+
+    public void KeluarGame()
+    {
+        Debug.Log("Keluar dari game!");
+        Application.Quit();
+    }
 }
