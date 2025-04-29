@@ -12,7 +12,6 @@ public class gui : MonoBehaviour
 
     public void KeluarGame()
     {
-        Debug.Log("Keluar dari game!");
-        Application.Quit();
+        SceneManager.LoadScene("scene");
     }
 }

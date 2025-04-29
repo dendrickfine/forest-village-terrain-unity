@@ -78,6 +78,11 @@ public class PlayerStats : MonoBehaviour
         nyawa -= jumlah;
         nyawa = Mathf.Clamp(nyawa, 0, 100);
         UpdateUI();
+
+        if (nyawa <= 0 && !gameBerakhir)
+        {
+            GameOver();
+        }
     }
 
     public void TambahPoin(int jumlah)
@@ -112,6 +117,10 @@ public class PlayerStats : MonoBehaviour
             KurangiNyawa(20);
             MatikanSemuaPointLight();
             Destroy(other.gameObject);
+        }
+        if (other.CompareTag("lumpur"))
+        {
+            KurangiNyawa(50);
         }
         else if (other.CompareTag("Health"))
         {

@@ -11,6 +11,7 @@ TagManager:
   - hijau
   - kuning
   - merah
+  - lumpur
   layers:
   - Default
   - TransparentFX
