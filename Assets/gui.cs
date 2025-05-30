@@ -12,6 +12,10 @@ public class gui : MonoBehaviour
 
     public void KeluarGame()
     {
-        SceneManager.LoadScene("scene");
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }
