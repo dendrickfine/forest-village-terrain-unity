@@ -1,63 +1,123 @@
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.SceneManagement; // Untuk restart scene
+using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class EnemyAI : MonoBehaviour
 {
     public Transform player;
     public float detectionRange = 15f;
     public float killDistance = 2f;
+    public float punchAnimationDuration = 1.2f;
+    public float patrolRadius = 10f;
+    public float waitTimeAtPatrolPoint = 2f;
 
     private NavMeshAgent agent;
+    private Animator animator;
     private bool isPlayerDead = false;
+    private bool hasStartedPunch = false;
+    private bool isPatrolling = true;
+    private Vector3 patrolTarget;
+    private bool isWaiting = false;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+        animator = GetComponent<Animator>();
+
         if (player == null)
         {
             player = GameObject.FindGameObjectWithTag("Player").transform;
         }
+
+        SetNewPatrolPoint();
     }
 
     void Update()
     {
         if (isPlayerDead) return;
 
-        float distance = Vector3.Distance(transform.position, player.position);
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
-        if (distance <= detectionRange)
+        // Deteksi player
+        if (distanceToPlayer <= killDistance && !hasStartedPunch)
         {
+            StartCoroutine(PunchAndKill());
+            return;
+        }
+        else if (distanceToPlayer <= detectionRange)
+        {
+            isPatrolling = false;
             agent.SetDestination(player.position);
+            animator.SetBool("isRunning", true);
+            return;
         }
 
-        if (distance <= killDistance)
+        // Jika tidak mendeteksi player, kembali patroli
+        if (!isPatrolling)
         {
-            KillPlayer();
+            isPatrolling = true;
+            SetNewPatrolPoint();
+        }
+
+        PatrolLogic();
+    }
+
+    void PatrolLogic()
+    {
+        if (isWaiting) return;
+
+        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+        {
+            StartCoroutine(WaitThenPatrol());
+        }
+
+        animator.SetBool("isRunning", true);
+    }
+
+    IEnumerator WaitThenPatrol()
+    {
+        isWaiting = true;
+        animator.SetBool("isRunning", false);
+        yield return new WaitForSeconds(waitTimeAtPatrolPoint);
+        SetNewPatrolPoint();
+        isWaiting = false;
+    }
+
+    void SetNewPatrolPoint()
+    {
+        Vector3 randomDirection = Random.insideUnitSphere * patrolRadius;
+        randomDirection += transform.position;
+
+        if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, patrolRadius, NavMesh.AllAreas))
+        {
+            patrolTarget = hit.position;
+            agent.SetDestination(patrolTarget);
         }
     }
 
-    void KillPlayer()
+    IEnumerator PunchAndKill()
     {
         isPlayerDead = true;
-        Debug.Log("Player caught!");
+        hasStartedPunch = true;
 
-        // Bisa diganti dengan animasi kematian atau game over UI
-        // Untuk contoh, kita restart scene
-        Invoke("RestartScene", 2f);
-    }
+        agent.ResetPath();
+        animator.SetBool("isRunning", false);
+        animator.SetTrigger("punch");
 
-    void RestartScene()
-    {
+        Debug.Log("Enemy memulai animasi punch...");
+
+        yield return new WaitForSeconds(punchAnimationDuration);
+
+        Debug.Log("Player terbunuh.");
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    // Tambahan: jika ingin trigger dengan collider
     private void OnTriggerEnter(Collider other)
     {
-        if (!isPlayerDead && other.CompareTag("Player"))
+        if (!isPlayerDead && !hasStartedPunch && other.CompareTag("Player"))
         {
-            KillPlayer();
+            StartCoroutine(PunchAndKill());
         }
     }
 }
